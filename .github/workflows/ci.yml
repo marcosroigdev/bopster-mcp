@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      # Version comes from package.json's packageManager, same as corepack in the Dockerfile.
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm build
+      - run: pnpm test
+
+  # The prepare_* and market-creation tools, end to end on an anvil fork of Base mainnet: every
+  # transaction sent is one the tools prepared, and market creation runs against a local
+  # stand-in for the backend. Public RPCs stop serving a fork's block after a few minutes, so the
+  # fork starts right before the tests.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      # Version comes from package.json's packageManager, same as corepack in the Dockerfile.
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # v1.9.2
+        with:
+          # Pinned: the suites were written against this anvil, and "stable" moves underneath them.
+          version: v1.7.1
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Start an anvil fork of Base mainnet
+        run: |
+          anvil --fork-url "${BASE_RPC_URL:-https://base-rpc.publicnode.com}" --port 8545 --silent &
+          for i in $(seq 1 30); do cast chain-id --rpc-url http://127.0.0.1:8545 && break; sleep 1; done
+        env:
+          BASE_RPC_URL: ${{ vars.BASE_RPC_URL }}
+      - run: pnpm test:e2e

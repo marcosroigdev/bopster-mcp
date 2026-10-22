@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # Version updates wait 14 days after a release; security updates don't.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14

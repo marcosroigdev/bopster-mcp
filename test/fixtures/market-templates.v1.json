@@ -1,0 +1,50 @@
+{"data": {
+  "contract_version": 1,
+  "templates": [
+    {"template_key": "price_threshold_v1", "version": 1, "question_pattern": "Will {asset} be {operator} ${target} at {deadlineLabel}?",
+     "fields": [
+       {"name": "asset", "type": "ticker", "required": true, "pattern": "^[A-Z0-9]{1,4}$", "min_length": 1, "max_length": 4},
+       {"name": "operator", "type": "enum", "required": true, "values": [">=", "<="], "renders_as": {">=": "above", "<=": "below"}},
+       {"name": "target", "type": "number", "required": true, "json_type": "number", "exclusive_minimum": 0, "maximum": null, "max_rendered_length": 12, "rendering": "js_number"},
+       {"name": "currency", "type": "enum", "required": true, "values": ["USD"]},
+       {"name": "deadlineUtc", "type": "datetime", "required": true, "format": "YYYY-MM-DDTHH:MM:SS.000Z", "must_equal": "market.resolveTime"}
+     ],
+     "constraints": []},
+    {"template_key": "event_outcome_v1", "version": 1, "question_pattern": "Will {event} before {deadlineLabel}?",
+     "fields": [
+       {"name": "event", "type": "text", "required": true, "min_length": 8, "max_length": 180, "length_unit": "utf16_code_units", "trimmed": true, "single_line": true, "forbidden_prefix": {"pattern": "^will\\s", "flags": "i"}, "forbidden_suffix": "?"},
+       {"name": "deadlineUtc", "type": "datetime", "required": true, "format": "YYYY-MM-DDTHH:MM:SS.000Z", "must_equal": "market.resolveTime"}
+     ],
+     "constraints": []},
+    {"template_key": "before_date_v1", "version": 1, "question_pattern": "Will {subject} {action} before {deadlineLabel}?",
+     "fields": [
+       {"name": "subject", "type": "text", "required": true, "min_length": 8, "max_length": 90, "length_unit": "utf16_code_units", "trimmed": true, "single_line": true},
+       {"name": "action", "type": "text", "required": true, "min_length": 8, "max_length": 90, "length_unit": "utf16_code_units", "trimmed": true, "single_line": true},
+       {"name": "deadlineUtc", "type": "datetime", "required": true, "format": "YYYY-MM-DDTHH:MM:SS.000Z", "must_equal": "market.resolveTime"}
+     ],
+     "constraints": []},
+    {"template_key": "price_change_v1", "version": 1, "question_pattern": "Will {asset} go {direction} by {percentage}% from its market creation before {deadlineLabel}?",
+     "fields": [
+       {"name": "asset", "type": "ticker", "required": true, "pattern": "^[A-Z0-9]{1,4}$", "min_length": 1, "max_length": 4},
+       {"name": "direction", "type": "enum", "required": true, "values": ["up", "down"]},
+       {"name": "percentage", "type": "number", "required": true, "json_type": "number", "exclusive_minimum": 0, "maximum": 100, "max_rendered_length": null, "rendering": "js_number"},
+       {"name": "deadlineUtc", "type": "datetime", "required": true, "format": "YYYY-MM-DDTHH:MM:SS.000Z", "must_equal": "market.resolveTime"}
+     ],
+     "constraints": []},
+    {"template_key": "compare_assets_v1", "version": 1, "question_pattern": "Will {assetA} be {direction} than {assetB} at {deadlineLabel}?",
+     "fields": [
+       {"name": "assetA", "type": "ticker", "required": true, "pattern": "^[A-Z0-9]{1,4}$", "min_length": 1, "max_length": 4},
+       {"name": "assetB", "type": "ticker", "required": true, "pattern": "^[A-Z0-9]{1,4}$", "min_length": 1, "max_length": 4},
+       {"name": "direction", "type": "enum", "required": true, "values": ["higher", "lower"]},
+       {"name": "deadlineUtc", "type": "datetime", "required": true, "format": "YYYY-MM-DDTHH:MM:SS.000Z", "must_equal": "market.resolveTime"}
+     ],
+     "constraints": [{"rule": "different", "fields": ["assetA", "assetB"], "compare": "trimmed_uppercase"}]}
+  ],
+  "rules": {
+    "deadline_label": {"token": "{deadlineLabel}", "format": "YYYY-MM-DD HH:MM UTC", "source": "deadlineUtc"},
+    "text": {"trim": "ecmascript_string_trim", "length_unit": "utf16_code_units", "forbidden_characters": "[\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029\\u241f]"},
+    "number": {"rendering": "js_number", "description": "Written as JavaScript String(Number(x)) writes it; values that would print in exponent notation are invalid."},
+    "question": "metadata.question must equal question_pattern with every token replaced, character for character."
+  },
+  "reality": {"template_id": 0, "arbitrator": "0xfb0d534131a38a3be787ed143e1028b61bc3f7c9", "timeout": 43200, "opening_ts": "market.resolveTime", "question": "the same text as metadata.question"}
+}}

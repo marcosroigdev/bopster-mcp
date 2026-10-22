@@ -1,0 +1,44 @@
+{
+  "name": "bopster-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.34.6",
+  "description": "MCP server that lets AI agents read Bopster prediction markets and prepare non-custodial transactions for them.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcosroigdev/bopster-mcp.git"
+  },
+  "homepage": "https://github.com/marcosroigdev/bopster-mcp#readme",
+  "type": "module",
+  "bin": {
+    "bopster-mcp": "dist/bin/stdio.js"
+  },
+  "engines": {
+    "node": ">=22.9"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/bin/stdio.ts",
+    "dev:http": "tsx watch src/bin/http.ts",
+    "start": "node --env-file-if-exists=.env dist/bin/http.js",
+    "start:stdio": "node --env-file-if-exists=.env dist/bin/stdio.js",
+    "inspector": "npx @modelcontextprotocol/inspector",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --import tsx --test test/*.test.ts",
+    "test:e2e": "node scripts/e2e-fork.mjs && node scripts/e2e-fork-create.mjs",
+    "check:templates": "node scripts/check-templates.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "express": "^5.2.1",
+    "viem": "^2.57.4",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,51 @@
+# Bopster MCP. Run with: docker compose up -d --build
+# The container listens on 127.0.0.1 only; nginx on the host handles TLS (see DEPLOYMENT.md).
+
+services:
+  mcp:
+    image: bopster-mcp:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ${PROJECT_NAME:-bopster}-mcp
+    restart: unless-stopped
+    environment:
+      BOPSTER_API_URL: ${BOPSTER_API_URL:-https://api.bopster.fun}
+      BOPSTER_MCP_SECRET: ${BOPSTER_MCP_SECRET:-}
+      BOPSTER_HTTP_TIMEOUT_MS: ${BOPSTER_HTTP_TIMEOUT_MS:-10000}
+      MCP_PORT: "8788"
+      BOPSTER_CHAIN_ID: ${BOPSTER_CHAIN_ID:-8453}
+      BOPSTER_RPC_URL: ${BOPSTER_RPC_URL:-https://mainnet.base.org}
+      BOPSTER_FACTORY_ADDRESS: ${BOPSTER_FACTORY_ADDRESS:-}
+      BOPSTER_REALITY_ARBITRATOR: ${BOPSTER_REALITY_ARBITRATOR:-}
+      BOPSTER_REALITY_TIMEOUT_SECONDS: ${BOPSTER_REALITY_TIMEOUT_SECONDS:-43200}
+      BOPSTER_REALITY_ANSWER_REWARD_WEI: ${BOPSTER_REALITY_ANSWER_REWARD_WEI:-0}
+      BOPSTER_SITE_URL: ${BOPSTER_SITE_URL:-https://bopster.fun}
+      BOPSTER_DRAFT_SECRET: ${BOPSTER_DRAFT_SECRET:-}
+    ports:
+      # 127.0.0.1 only: nginx on the host is the public side.
+      - "127.0.0.1:${MCP_PORT:-8788}:8788"
+    # A public endpoint with no auth: no root, no capabilities, no writable filesystem, and a cap
+    # on what it can take from the host. It's stateless and only reads its own files.
+    user: node
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 128
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8788/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
